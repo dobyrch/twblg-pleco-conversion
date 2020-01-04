@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+submodule='moedict-data-twblg'
+output='dict-twblg.txt'
+
+if [ -z "$(ls -A ${module})" ]; then
+	git submodule init
+	git submodule update
+fi
+
+./json_to_txt "${submodule}"/dict-twblg{,-ext}.json > "${output}" && \
+patch "${output}" 'tweaks.patch'
