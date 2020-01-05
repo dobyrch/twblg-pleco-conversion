@@ -85,7 +85,7 @@ final = re.sub('\s+', '', f"""(?:
     a{d}   (?:nn|m|n|ng|p|t|k|h|nnh)? |
     a{d}i  (?:nn|h|nnh)? |
     a{d}u  (?:nn|h|nnh)? |
-    e{d}   (?:nn|ng|h|nnh)? |
+    e{d}   (?:nn|ng|h|nnh|r)? |
     i{d}   (?:nn|m|n|ng|p|t|k|h|nnh)? |
     ia{d}  (?:nn|m|n|ng|p|t||k|h|nnh)? |
     ia{d}u (?:nn|h)? |
@@ -103,11 +103,11 @@ final = re.sub('\s+', '', f"""(?:
 
     au{d}  (?:h)? |
     o{d}e  (?:h)? |
+    oo{d}  (?:h)? |
     u{d}a  (?:nn|n|t|h)? |
     u{d}e  (?:h)? |
-    ui{d}  (?:nn|h)? |
-    oo{d}  (?:h)?
-)r?""")
+    ui{d}  (?:nn|h)?
+)""")
 
 tai_lo = re.compile(f"""
         (?<=[^a-z{no_d}])
@@ -129,7 +129,7 @@ def tone_diacritic_to_number(string):
 
         number = tone_map.get(diacritic)
         if not number:
-            if word[-1] in 'ptkh' or word[-1] == 'r' and word[-2] in 'ptkh':
+            if word[-1] in 'ptkh':
                 number = '4'
             else:
                 number = '1'
