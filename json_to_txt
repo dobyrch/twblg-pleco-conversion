@@ -124,7 +124,12 @@ def tone_diacritic_to_number(string):
     search_start = 1
 
     while match := tai_lo.search(string, search_start):
+        search_start = match.end()
         word = re.sub(d, '', match[0])
+
+        if word[1:].isupper():
+            continue
+
         diacritic =  ''.join(match.groups(default='')[1:])
         assert len(diacritic) <= 1
 
@@ -136,7 +141,6 @@ def tone_diacritic_to_number(string):
                 number = '1'
 
         string = string[:match.start()] + word + number + string[match.end():]
-        search_start = match.end()
 
     # Drop the extra space added at the beginning
     return string[1:]
