@@ -29,7 +29,8 @@ def convert_dictionary(dictionary):
 
         for heteronym in entry['heteronyms']:
             pinyin = '@' + tone_diacritic_to_number(heteronym['trs'])
-            definitions = [d for d in heteronym['definitions'] if d['def']]
+            definitions = [d for d in heteronym['definitions']
+                           if d['def'] not in {'', '綴\u20DE', '狀\u20DE'}]
             split_definition = []
 
             for i, defdict in enumerate(definitions):
