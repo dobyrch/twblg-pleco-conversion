@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+import json
+
+from collections import defaultdict
+
+from tones import tone_diacritic_to_number
+
+
+bold_on = '\uEABE'
+bold_off = '\uEABF'
+
+link_on = '\uEAB8'
+link_off = '\uEABB'
+
+newline  = '\uEAB1'
+double_newline = newline + ' ' + newline
+
+
+def main():
+    with open('moedict-data-twblg/uni/對應華語.csv') as f:
+        next(f)
+        chinese_to_id = defaultdict(list)
+        for line in f:
+            row = line.split(',')
+            assert len(row) == 3
+            entry_id = int(row[1])
+            chinese = row[2].strip()
+            chinese_to_id[chinese].append(entry_id)
+
+    with open('moedict-data-twblg/dict-twblg.json') as f:
+        dictionary = json.load(f)
+
+    with open('moedict-data-twblg/dict-twblg-ext.json') as f:
+        dictionary.extend(json.load(f))
+
+    id_to_taiwanese = {}
+    for entry in dictionary:
+        headword = link_on + entry['title'] + link_off
+
+        for heteronym in entry['heteronyms']:
+            entry_id = int(heteronym['id'])
+            pinyin = tone_diacritic_to_number(heteronym['trs'])
+            id_to_taiwanese[entry_id] = headword + newline + pinyin
+
+    for chinese, entry_ids in chinese_to_id.items():
+
+        #TODO: cleanly handle entries from appendices
+        entry_ids = [entry_id for entry_id in entry_ids if id_to_taiwanese.get(entry_id) is not None]
+
+        if not entry_ids:
+            continue
+
+        #TODO: Remove duplicate entries and sort
+        print(chinese, end='\t\t')
+        print(double_newline.join(id_to_taiwanese[entry_id] for entry_id in entry_ids))
+
+
+if __name__ == '__main__':
+    main()
