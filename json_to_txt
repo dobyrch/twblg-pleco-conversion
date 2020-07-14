@@ -3,15 +3,30 @@ import json
 import re
 import sys
 
+from collections import defaultdict
+
 from tones import tone_diacritic_to_number
 
 
 def main():
     if len(sys.argv) < 2:
         sys.exit('Usage: json_to_txt FILE ...')
+
+    alternate_readings = [defaultdict(list) for _ in range(3)]
+    with open('moedict-data-twblg/uni/又音.csv') as f:
+        # skip header
+        next(f)
+        for line in f:
+            row = line.split(',')
+            assert(len(row) == 4)
+            alternate_readings[int(row[3])-1][int(row[1])].append(tone_diacritic_to_number(row[2].strip()))
+
+    #from pprint import pprint
+    #pprint(alternate_readings)
+
     for arg in sys.argv[1:]:
         with open(arg) as f:
-            convert_dictionary(json.load(f))
+            convert_dictionary(json.load(f), alternate_readings)
 
 
 bold_on = '\uEABE'
@@ -24,7 +39,7 @@ newline  = '\uEAB1'
 double_newline = newline + ' ' + newline
 
 
-def convert_dictionary(dictionary):
+def convert_dictionary(dictionary, alternate_readings):
     for entry in dictionary:
         headword = entry['title']
 
@@ -62,6 +77,17 @@ def convert_dictionary(dictionary):
 
             if reading := heteronym.get('reading'):
                 split_definition.append('〈' + bold_on + reading + bold_off + '〉')
+
+            entry_id = int(heteronym['id'])
+            all_readings = []
+
+            for i, reading_type in enumerate(('又唸作', '俗唸作', '合音唸作')):
+                if readings := alternate_readings[i][entry_id]:
+                    all_readings.append(bold_on + reading_type + bold_off
+                     +  ' ' + '、'.join(readings))
+
+            if all_readings:
+                split_definition.append(newline.join(all_readings))
 
             definition = double_newline.join(d.strip(newline+' '+'\t'+'\n') for d in split_definition)
             print(headword, pinyin, definition, sep='\t')
