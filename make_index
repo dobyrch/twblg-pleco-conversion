@@ -50,9 +50,13 @@ def main():
         if not entry_ids:
             continue
 
-        #TODO: Remove duplicate entries and sort
         print(chinese, end='\t\t')
-        print(double_newline.join(id_to_taiwanese[entry_id] for entry_id in entry_ids))
+        print(double_newline.join(dedup(id_to_taiwanese[entry_id] for entry_id in entry_ids)))
+
+
+def dedup(seq):
+    seen = set()
+    return [x for x in seq if not (x in seen or seen.add(x))]
 
 
 if __name__ == '__main__':
