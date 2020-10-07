@@ -26,7 +26,7 @@ TONES = ''.join((
 ))
 
 TAILO = f"a-zA-Z{TONES}"
-
+LOW_LINE = '\uFF3F'
 
 def main():
     if len(sys.argv) < 2:
@@ -47,6 +47,7 @@ def main():
 
 
 def cloze(sentence_hanzi, sentence_tailo, headword, tailo):
+    assert LOW_LINE not in sentence_hanzi + sentence_tailo
     #if sentence_hanzi.count(headword) != sentence_tailo.count(tailo):
     #    print('*'*20)
 
@@ -69,10 +70,11 @@ def cloze(sentence_hanzi, sentence_tailo, headword, tailo):
 
         t_start = split_tailo[correspondences[0]].start()
         t_end = split_tailo[correspondences[-1]].end()
-        sentence_tailo = sentence_tailo[:t_start] + '%'*(t_end-t_start) + sentence_tailo[t_end:]
-        sentence_hanzi = sentence_hanzi[:h_start] + '%'*(h_end-h_start) + sentence_hanzi[h_end:]
+        sentence_tailo = sentence_tailo[:t_start] + LOW_LINE*(t_end-t_start) + sentence_tailo[t_end:]
+        sentence_hanzi = sentence_hanzi[:h_start] + LOW_LINE*(h_end-h_start) + sentence_hanzi[h_end:]
 
-    return sentence_hanzi, sentence_tailo
+    #tailo_len = len(re.sub(f"[{TONES}\-]", '', tailo.split('/')[0]))
+    return sentence_hanzi, re.sub(f"{LOW_LINE}+", LOW_LINE*len(headword), sentence_tailo)
 
 
 def convert_dictionary(dictionary, alternate_readings):
