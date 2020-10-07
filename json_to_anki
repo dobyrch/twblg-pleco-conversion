@@ -118,15 +118,14 @@ def convert_dictionary(dictionary, alternate_readings):
 
                         if any(punc in example_split[0] for punc in '。！？'):
                             example_hanzi, example_tailo = cloze(example_split[0], example_split[1], headword, tailo)
-                            print(example_hanzi)
-                            print(example_tailo)
+                            print(example_hanzi, end='\t')
+                            print(example_tailo, end='\t')
                             if len(example_split) == 3:
-                                print(example_split[2])
-                            print('-'*20)
-                            print(headword)
-                            print(tailo)
+                                print(example_split[2], end='')
+                            print(end='\t')
+                            print(headword, end='\t')
+                            print(tailo, end='\t')
                             print(definition)
-                            print()
 
 
             if synonyms := heteronym.get('synonyms'):
