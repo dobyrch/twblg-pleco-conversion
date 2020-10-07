@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+import json
+import re
+import sys
+
+from collections import defaultdict
+
+CJK = ''.join((
+    '\u4E00-\u9FCC',            #CJK Unified Ideographs
+    '\u3400-\u4DBF',            # Extension A
+    '\U00020000-\U0002A6DF',    # Extension B
+    '\U0002A700-\U0002B73F',    # Extension C
+    '\U0002B740-\U0002B81F',    # Extension D
+    '\U0002B820-\U0002CEAF',    # Extension E
+    '\U0002CEB0-\U0002EBEF',    # Extension F
+    '\U00030000-\U0003134F',    # Extension G
+))
+
+TONES = ''.join((
+    '\u0301',
+    '\u0300',
+    '\u0302',
+    '\u0304',
+    '\u030D',
+    '\u030B',
+))
+
+TAILO = f"a-zA-Z{TONES}"
+
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit('Usage: json_to_anki FILE ...')
+
+    alternate_readings = [defaultdict(list) for _ in range(3)]
+    with open('moedict-data-twblg/uni/又音.csv') as f:
+        # skip header
+        next(f)
+        for line in f:
+            row = line.split(',')
+            assert(len(row) == 4)
+            alternate_readings[int(row[3])-1][int(row[1])].append(row[2].strip())
+
+    for arg in sys.argv[1:]:
+        with open(arg) as f:
+            convert_dictionary(json.load(f), alternate_readings)
+
+
+def cloze(sentence_hanzi, sentence_tailo, headword, tailo):
+    #if sentence_hanzi.count(headword) != sentence_tailo.count(tailo):
+    #    print('*'*20)
+
+    # TODO: Don't duplicate tailo regex
+    split_hanzi = [match for match in re.finditer(f"⿸疒哥|[{CJK}]|[{TAILO}]+", sentence_hanzi)]
+    split_tailo = [match for match in re.finditer(f"[{TAILO}]+", sentence_tailo)]
+
+    if len(split_hanzi) != len(split_tailo):
+        return '@@@@' + sentence_hanzi, '@@@' + sentence_tailo
+
+    assert re.escape(headword) == headword
+
+    for headword_match in re.finditer(headword, sentence_hanzi):
+        correspondences = []
+        h_start, h_end = headword_match.span()
+
+        for i, char_match in enumerate(split_hanzi):
+            if char_match.start() >= h_start and char_match.end() <= h_end:
+                correspondences.append(i)
+
+        t_start = split_tailo[correspondences[0]].start()
+        t_end = split_tailo[correspondences[-1]].end()
+        sentence_tailo = sentence_tailo[:t_start] + '%'*(t_end-t_start) + sentence_tailo[t_end:]
+        sentence_hanzi = sentence_hanzi[:h_start] + '%'*(h_end-h_start) + sentence_hanzi[h_end:]
+
+    return sentence_hanzi, sentence_tailo
+
+
+def convert_dictionary(dictionary, alternate_readings):
+    for entry in dictionary:
+        headword = entry['title']
+
+        for heteronym in entry['heteronyms']:
+            tailo = heteronym['trs']
+            definitions = [d for d in heteronym['definitions']
+                           if d['def'] not in {'', '綴\u20DE', '狀\u20DE'}]
+            split_definition = []
+
+            for i, defdict in enumerate(definitions):
+                split_definition.append('')
+                definition = defdict['def']
+
+                if definition == '辨\u20DE&nbsp似\u20DE':
+                    assert i+2 == len(definitions)
+
+                    split_definition[-1] += definitions[i+1]['def']
+                    break
+
+                if len(definitions) > 1:
+                    split_definition[-1] += str(i+1) + '  '
+                if pos := defdict.get('type'):
+                    split_definition[-1] +=  pos + '  '
+
+                split_definition[-1] += definition
+
+                if examples := defdict.get('example'):
+                    for i, example in enumerate(examples):
+                        example = re.sub('[\uFFF9\uFFFA\uFFFB]', '\n', example)
+                        split_definition.append(example)
+                        #print('='*20, headword, '='*20)
+                        #print(f"Part of speech: {pos}")
+                        #print(f"Definition: {definition}")
+                        #print(example)
+
+                        example_split = [ex.strip() for ex in example.strip().splitlines()]
+                        assert len(example_split) <= 3
+
+                        if any(punc in example_split[0] for punc in '。！？'):
+                            example_hanzi, example_tailo = cloze(example_split[0], example_split[1], headword, tailo)
+                            print(example_hanzi)
+                            print(example_tailo)
+                            if len(example_split) == 3:
+                                print(example_split[2])
+                            print('-'*20)
+                            print(headword)
+                            print(tailo)
+                            print(definition)
+                            print()
+
+
+            if synonyms := heteronym.get('synonyms'):
+                split_definition.append('似' + '  '  + synonyms)
+
+            if reading := heteronym.get('reading'):
+                split_definition.append('〈' + reading + '〉')
+
+            entry_id = int(heteronym['id'])
+            all_readings = []
+
+            for i, reading_type in enumerate(('又唸作', '俗唸作', '合音唸作')):
+                if readings := alternate_readings[i][entry_id]:
+                    all_readings.append(reading_type
+                     +  ' ' + '、'.join(readings))
+
+            if all_readings:
+                split_definition.append('\n'.join(all_readings))
+
+            definition = '\n'.join(d.strip('\n'+' '+'\t'+'\n') for d in split_definition)
+            #print(headword, pinyin, definition, sep='\t')
+
+
+if __name__ == '__main__':
+    main()
