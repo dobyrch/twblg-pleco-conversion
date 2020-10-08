@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os.path
 import re
 import sys
 
@@ -83,29 +84,30 @@ def convert_dictionary(dictionary, alternate_readings):
 
         for heteronym in entry['heteronyms']:
             tailo = heteronym['trs']
+            entry_id = int(heteronym['id'])
             definitions = [d for d in heteronym['definitions']
                            if d['def'] not in {'', '綴\u20DE', '狀\u20DE'}]
             split_definition = []
 
-            for i, defdict in enumerate(definitions):
+            for def_id, defdict in enumerate(definitions):
                 split_definition.append('')
                 definition = defdict['def']
 
                 if definition == '辨\u20DE&nbsp似\u20DE':
-                    assert i+2 == len(definitions)
+                    assert def_id+2 == len(definitions)
 
-                    split_definition[-1] += definitions[i+1]['def']
+                    split_definition[-1] += definitions[def_id+1]['def']
                     break
 
                 if len(definitions) > 1:
-                    split_definition[-1] += str(i+1) + '  '
+                    split_definition[-1] += str(def_id+1) + '  '
                 if pos := defdict.get('type'):
                     split_definition[-1] +=  pos + '  '
 
                 split_definition[-1] += definition
 
                 if examples := defdict.get('example'):
-                    for i, example in enumerate(examples):
+                    for ex_id, example in enumerate(examples):
                         example = re.sub('[\uFFF9\uFFFA\uFFFB]', '\n', example)
                         split_definition.append(example)
                         #print('='*20, headword, '='*20)
@@ -118,14 +120,22 @@ def convert_dictionary(dictionary, alternate_readings):
 
                         if any(punc in example_split[0] for punc in '。！？'):
                             example_hanzi, example_tailo = cloze(example_split[0], example_split[1], headword, tailo)
+                            print(f"{entry_id}-{def_id}-{ex_id}", end='\t')
                             print(example_hanzi, end='\t')
                             print(example_tailo, end='\t')
-                            if len(example_split) == 3:
-                                print(example_split[2], end='')
-                            print(end='\t')
+                            print(definition, end='\t')
+                            #if len(example_split) == 3:
+                            #    print(example_split[2], end='')
+                            #print(end='\t')
                             print(headword, end='\t')
                             print(tailo, end='\t')
-                            print(definition)
+
+                            audio_file = f"moe_{entry_id:05}.mp3"
+
+                            if os.path.isfile(f"audio/{audio_file}"):
+                                print(f"[sound:{audio_file}]", end='')
+
+                            print()
 
 
             if synonyms := heteronym.get('synonyms'):
@@ -134,7 +144,6 @@ def convert_dictionary(dictionary, alternate_readings):
             if reading := heteronym.get('reading'):
                 split_definition.append('〈' + reading + '〉')
 
-            entry_id = int(heteronym['id'])
             all_readings = []
 
             for i, reading_type in enumerate(('又唸作', '俗唸作', '合音唸作')):
