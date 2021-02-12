@@ -51,7 +51,7 @@ def main():
             continue
 
         print(chinese, end='\t\t')
-        print(double_newline.join(dedup(id_to_taiwanese[entry_id] for entry_id in entry_ids)))
+        print(double_newline.join(sorted(dedup(id_to_taiwanese[entry_id] for entry_id in entry_ids))))
 
 
 def dedup(seq):
