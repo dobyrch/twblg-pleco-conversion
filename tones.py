@@ -7,9 +7,9 @@ tone_map = {
     '\u0302': '5', # circumflex
     '\u0304': '7', # macron
     '\u030D': '8', # vertical line
-    # Use 6 to indicate contractions
+    # Use 9 to indicate contractions
     # (pronounced with rising tone)
-    '\u030B': '6', # double accute
+    '\u030B': '9', # double accute
 }
 
 d = f"({'|'.join(tone_map)})?"

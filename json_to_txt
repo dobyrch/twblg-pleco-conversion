@@ -21,9 +21,6 @@ def main():
             assert(len(row) == 4)
             alternate_readings[int(row[3])-1][int(row[1])].append(tone_diacritic_to_number(row[2].strip()))
 
-    #from pprint import pprint
-    #pprint(alternate_readings)
-
     for arg in sys.argv[1:]:
         with open(arg) as f:
             convert_dictionary(json.load(f), alternate_readings)
