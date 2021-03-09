@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import csv
+import re
+
 from collections import defaultdict
 
 
@@ -34,9 +36,29 @@ def main():
                 entry = id_to_entry[row[1]]
                 if entry[2] == '12':
                     for chinese in id_to_chinese[row[1]]:
-                        print(chinese, '@' + entry[0], row[4], sep='\t')
+                        print(chinese, '@' + entry[0], beautify(row[4]), sep='\t')
                 else:
-                    print(entry[0], '@' + entry[1], row[4], sep='\t')
+                    print(entry[0], '@' + entry[1], beautify(row[4]), sep='\t')
+
+
+bold_on = '\uEABE'
+bold_off = '\uEABF'
+
+
+# Remove redundant "附錄" from every entry
+def beautify(entry):
+    if match := re.search('\(?附錄－([^－)]+)－?([^)]*)\)?', entry):
+        assert match.end() == len(entry)
+        entry = entry[:match.start()]
+        entry_type = match.group(2) or match.group(1)
+
+        if entry:
+            entry += f"（{entry_type}）"
+        else:
+            entry = entry_type
+
+    return entry
+
 
 if __name__ == '__main__':
     main()
