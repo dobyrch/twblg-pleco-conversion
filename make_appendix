@@ -4,6 +4,8 @@ import re
 
 from collections import defaultdict
 
+from tones import tone_diacritic_to_number
+
 
 def main():
     id_to_chinese = defaultdict(list)
@@ -38,7 +40,7 @@ def main():
                     for chinese in id_to_chinese[row[1]]:
                         print(chinese, '@' + entry[0], beautify(row[4]), sep='\t')
                 else:
-                    print(entry[0], '@' + entry[1], beautify(row[4]), sep='\t')
+                    print(entry[0], '@' + tone_diacritic_to_number(entry[1]), beautify(row[4]), sep='\t')
 
 
 bold_on = '\uEABE'
