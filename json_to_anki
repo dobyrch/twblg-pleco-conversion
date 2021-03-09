@@ -122,18 +122,16 @@ def convert_dictionary(dictionary, alternate_readings):
 
                         if any(punc in example_split[0] for punc in '。！？'):
                             example_hanzi, example_tailo = cloze(example_split[0], example_split[1], headword, tailo)
+                            if len(example_split) == 3:
+                                example_trans = example_split[2]
+
                             ident = f"{entry_id}-{def_id}-{ex_id}"
-                            #if len(example_split) == 3:
-                            #    print(example_split[2], end='')
-                            #print(end='\t')
 
                             audio_file = f"moe_{entry_id:05}.mp3"
                             if os.path.isfile(f"audio/{audio_file}"):
                                 sound = f"[sound:{audio_file}]"
-                            else:
-                                sound = ''
-
-                            csvwriter.writerow([ident, example_hanzi, example_tailo, definition, headword, tailo, sound])
+                                csvwriter.writerow([ident, example_hanzi, example_tailo, example_trans,
+                                    definition, headword, tailo, sound])
 
 
             if synonyms := heteronym.get('synonyms'):
